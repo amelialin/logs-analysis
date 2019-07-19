@@ -48,7 +48,6 @@ c.execute('''
     '''
     )
 top_articles = c.fetchall()
-print type(top_articles)
 pprint(top_articles)
 
 # print 'Out of total count:'
@@ -118,9 +117,12 @@ top_error_days = c.fetchall()
 pprint(top_error_days)
 
 with open(OUTPUT_FILE, 'w') as fp:
-    fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in top_articles) + '\n')
-    fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in top_authors) + '\n')
-    fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in top_error_days))
+    fp.write("1. TOP ARTICLES\nWhat are the most popular three articles of all time? Which articles have been accessed the most?\n\n")
+    fp.write('\n'.join('"{}"'.format(x[0]).title() + ' - ' + '{:,} views'.format(x[1]) for x in top_articles) + '\n\n')
+    fp.write("2. TOP AUTHORS\nWho are the most popular article authors of all time?\n\n")
+    fp.write('\n'.join('{} - {:,} views'.format(x[0],x[1]) for x in top_authors) + '\n\n')
+    fp.write("3. TOP ERROR DAYS\nOn which days did more than 1% of requests lead to errors?\n\n")
+    fp.write('\n'.join('{:%B %d}, {:%Y} - {}% errors'.format(x[0],x[0],x[1]) for x in top_error_days))
 
 db.close() 
 
