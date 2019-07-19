@@ -1,36 +1,39 @@
+#!/usr/bin/env python2
+
 import psycopg2
 from pprint import pprint
 
 DBNAME = "news"
+OUTPUT_FILE = "output.txt"
 
 db = psycopg2.connect(database=DBNAME)
 c = db.cursor()
 
 # Sanity checks of table sizes
 
-c.execute('''
-    select count(*) as num 
-    from articles;
-    '''
-    )
-results = c.fetchall()
-print 'articles:', results[0][0]
+# c.execute('''
+#     select count(*) as num 
+#     from articles;
+#     '''
+#     )
+# results = c.fetchall()
+# print 'articles:', results[0][0]
 
-c.execute('''
-    select count(*) as num 
-    from authors;
-    '''
-    )
-results = c.fetchall()
-print 'authors:', results[0][0]
+# c.execute('''
+#     select count(*) as num 
+#     from authors;
+#     '''
+#     )
+# results = c.fetchall()
+# print 'authors:', results[0][0]
 
-c.execute('''
-    select count(*) as num 
-    from log;
-    '''
-    )
-results = c.fetchall()
-print 'log:', results[0][0]
+# c.execute('''
+#     select count(*) as num 
+#     from log;
+#     '''
+#     )
+# results = c.fetchall()
+# print 'log:', results[0][0]
 
 # 1. What are the most popular three articles of all time? Which articles have been accessed the most?
 
@@ -44,18 +47,19 @@ c.execute('''
     limit 3;
     '''
     )
-results = c.fetchall()
-pprint(results)
+top_articles = c.fetchall()
+print type(top_articles)
+pprint(top_articles)
 
-print 'Out of total count:'
-c.execute('''
-    select count(*) as num 
-    from articles join log
-        on concat('/article/', articles.slug) = log.path;
-    '''
-    )
-results = c.fetchall()[0][0]
-pprint(results)
+# print 'Out of total count:'
+# c.execute('''
+#     select count(*) as num 
+#     from articles join log
+#         on concat('/article/', articles.slug) = log.path;
+#     '''
+#     )
+# results = c.fetchall()[0][0]
+# pprint(results)
 
 # 2. Who are the most popular article authors of all time? That is, when you sum up all of the articles each author has written, which authors get the most page views?
 
@@ -70,27 +74,27 @@ c.execute('''
     order by num desc;
     '''
     )
-results = c.fetchall()
-pprint(results)
+top_authors = c.fetchall()
+pprint(top_authors)
 
-print 'Out of total count:'
-c.execute('''
-    select count(*) as num 
-    from articles join log 
-        on concat('/article/', articles.slug) = log.path
-    join authors
-        on articles.author = authors.id;
-    '''
-    )
-results = c.fetchall()[0][0]
-pprint(results)
+# print 'Out of total count:'
+# c.execute('''
+#     select count(*) as num 
+#     from articles join log 
+#         on concat('/article/', articles.slug) = log.path
+#     join authors
+#         on articles.author = authors.id;
+#     '''
+#     )
+# results = c.fetchall()[0][0]
+# pprint(results)
 
 # 3. On which days did more than 1% of requests lead to errors?
 
 print 'High error days:'
 c.execute('''
     select * from
-        (select count_total.day, (errors * 100.00 / total) as percent_error
+        (select count_total.day, round((errors * 100.00 / total), 1) as percent_error
         from 
             (select CAST(time AS date) as day, count(*) as total
                 from log
@@ -110,8 +114,17 @@ c.execute('''
     ;
     '''
     )
+top_error_days = c.fetchall()
+pprint(top_error_days)
 
-results = c.fetchall()
-pprint(results)
+with open(OUTPUT_FILE, 'w') as fp:
+    fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in top_articles) + '\n')
+    fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in top_authors) + '\n')
+    fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in top_error_days))
 
-db.close()
+db.close() 
+
+# if __name__ == '__main__':
+#     db = psycopg2.connect(database=DBNAME)
+#     c = db.cursor()
+#     db.close()
