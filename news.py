@@ -5,8 +5,10 @@ import psycopg2
 DATABASE_NAME = "news"
 OUTPUT_FILE = "output.txt"
 
+
 def get_top_articles(cursor):
-    """Returns list of tuples of (article title, views) for top 3 viewed articles, ranked by views descending."""
+    """Returns list of tuples of (article title, views) for top 3 viewed
+    articles, ranked by views descending."""
     cursor.execute('''
         SELECT title,
                COUNT(*) AS num
@@ -15,12 +17,13 @@ def get_top_articles(cursor):
         GROUP BY title
         ORDER BY num DESC
         LIMIT 3;
-        '''
-        )
+        ''')
     return cursor.fetchall()
 
+
 def get_top_authors(cursor):
-    """Returns list of tuples of (author, views of all authored articles) for all authors, ranked by views descending."""
+    """Returns list of tuples of (author, views of all authored articles) for
+    all authors, ranked by views descending."""
     cursor.execute('''
         SELECT authors.name,
                COUNT(*) AS num
@@ -29,12 +32,13 @@ def get_top_authors(cursor):
         JOIN authors ON articles.author = authors.id
         GROUP BY authors.name
         ORDER BY num DESC;
-        '''
-        )
+        ''')
     return cursor.fetchall()
 
+
 def get_top_error_days(cursor):
-    """Returns list of tuples of (date, percent) for all days ON which more than 1% of requests led to errors, ordered by date."""
+    """Returns list of tuples of (date, percent) for all days ON which more
+    than 1% of requests led to errors, ordered by date."""
     cursor.execute('''
         SELECT *
         FROM
@@ -54,9 +58,9 @@ def get_top_error_days(cursor):
              ON count_total.day = count_errors.day) AS percent_error_by_day
         WHERE percent_error > 2
         ORDER BY day ASC;
-        '''
-        )
+        ''')
     return cursor.fetchall()
+
 
 OUTPUT_TEMPLATE = '''
 1. TOP ARTICLES
@@ -73,7 +77,8 @@ Who are the most popular article authors of all time?
 On which days did more than 1% of requests lead to errors?
 
 {top_error_days}
-'''.strip()
+'''.strip()  # nopep8
+
 
 if __name__ == '__main__':
     print('Connecting to database...')
@@ -82,14 +87,17 @@ if __name__ == '__main__':
         print('Connection successful...')
 
         print('Querying for top articles...')
-        top_articles = '\n'.join('"{}" - {:,} views'.format(article_title.title(), views)
-                                    for (article_title, views) in get_top_articles(cursor))
+        top_articles = '\n'.join(
+            '"{}" - {:,} views'.format(article_title.title(), views)
+            for (article_title, views) in get_top_articles(cursor))
         print('Querying for top authors...')
-        top_authors = '\n'.join('{} - {:,} views'.format(author, views)
-                                for (author, views) in get_top_authors(cursor))
+        top_authors = '\n'.join(
+            '{} - {:,} views'.format(author, views)
+            for (author, views) in get_top_authors(cursor))
         print('Querying for top error days...')
-        top_error_days = '\n'.join('{:%B %d}, {:%Y} - {}% errors'.format(day, day, error_percent)
-                                for (day, error_percent) in get_top_error_days(cursor))
+        top_error_days = '\n'.join(
+            '{:%B %d}, {:%Y} - {}% errors'.format(day, day, error_percent)
+            for (day, error_percent) in get_top_error_days(cursor))
     print('Connection closed...')
 
     print('Writing to output.txt...')
