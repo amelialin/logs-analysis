@@ -15,6 +15,7 @@ c.execute('''
     )
 results = c.fetchall()
 print 'articles:', results[0][0]
+
 c.execute('''
     select count(*) as num 
     from authors;
@@ -22,6 +23,7 @@ c.execute('''
     )
 results = c.fetchall()
 print 'authors:', results[0][0]
+
 c.execute('''
     select count(*) as num 
     from log;
@@ -65,8 +67,7 @@ c.execute('''
     join authors
         on articles.author = authors.id
     group by authors.name
-    order by num desc
-    limit 3;
+    order by num desc;
     '''
     )
 results = c.fetchall()
@@ -85,5 +86,32 @@ results = c.fetchall()[0][0]
 pprint(results)
 
 # 3. On which days did more than 1% of requests lead to errors?
+
+print 'High error days:'
+c.execute('''
+    select * from
+        (select count_total.day, (errors * 100.00 / total) as percent_error
+        from 
+            (select CAST(time AS date) as day, count(*) as total
+                from log
+                group by day
+                order by day asc
+            ) as count_total 
+            join (select CAST(time AS date) as day, count(*) as errors
+                from log
+                where status != '200 OK'
+                group by day
+                order by day asc
+            ) as count_errors
+            on count_total.day = count_errors.day
+        ) as a
+        where percent_error > 2
+        order by day asc
+    ;
+    '''
+    )
+
+results = c.fetchall()
+pprint(results)
 
 db.close()
