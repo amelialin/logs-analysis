@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import psycopg2
 
 DATABASE_NAME = "news"
@@ -13,7 +14,7 @@ def get_top_articles(cursor):
         SELECT title,
                COUNT(*) AS num
         FROM articles
-        JOIN log ON concat('/article/', articles.slug) = log.path
+        JOIN log ON CONCAT('/article/', articles.slug) = log.path
         GROUP BY title
         ORDER BY num DESC
         LIMIT 3;
@@ -28,7 +29,7 @@ def get_top_authors(cursor):
         SELECT authors.name,
                COUNT(*) AS num
         FROM articles
-        JOIN log ON concat('/article/', articles.slug) = log.path
+        JOIN log ON CONCAT('/article/', articles.slug) = log.path
         JOIN authors ON articles.author = authors.id
         GROUP BY authors.name
         ORDER BY num DESC;
@@ -82,7 +83,14 @@ On which days did more than 1% of requests lead to errors?
 
 if __name__ == '__main__':
     print('Connecting to database...')
-    with psycopg2.connect(database=DATABASE_NAME) as database_connection:
+    try:
+        database_connection = psycopg2.connect(database=DATABASE_NAME)
+    except psycopg2.Error as e:
+        print('Unable to connect.')
+        print('Error:', e.pgerror)
+        print('Message detail:', e.diag.message_detail)
+        sys.exit(1)
+    else:
         cursor = database_connection.cursor()
         print('Connection successful...')
 
